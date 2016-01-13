@@ -41,12 +41,12 @@ make
 cp XS ../
 cd ..
 # GET COUNT ===================================================================
-git clone https://github.com/pratas/count.git
-cd count
-cmake .
-make
-cp COUNT ../
-cd ..
+# git clone https://github.com/pratas/count.git
+# cd count
+# cmake .
+# make
+# cp COUNT ../
+# cd ..
 fi
 ###############################################################################
 # SIMULATE ====================================================================
@@ -87,7 +87,6 @@ set output "mut.pdf"
 set auto
 set key right bottom
 set yrange [0:100] 
-#set xrange [0:50]  
 set grid
 unset key
 set ylabel "Similarity"
