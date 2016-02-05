@@ -14,7 +14,7 @@ FALCON=1;
 FILTER=1;
 PLOT=1;
 DISTRIBUTION="0.3,0.2,0.2,0.3,0.001";
-EXTRAMUT="" # -ir 0.01 -dr 0.01 ";
+EXTRAMUT=" -ir 0.01 -dr 0.01 ";
 FPARAM=" -m 20:500:1:3/50 -m 14:100:1:0/0 -m 12:1:0:0/0 -m 4:1:0:0/0 \
 -c 10 -g 0.95 ";
 ###############################################################################
@@ -40,13 +40,14 @@ cd xs
 make
 cp XS ../
 cd ..
-# GET COUNT ===================================================================
-# git clone https://github.com/pratas/count.git
-# cd count
-# cmake .
-# make
-# cp COUNT ../
-# cd ..
+# GET MUMmer 3.23 =============================================================
+# http://downloads.sourceforge.net/project/mummer/mummer/3.23/MUMmer3.23.tar.gz
+# tar -xvzf MUMmer3.23.tar.gz
+# cd XXX:
+# make check
+# make install
+# ./nucmer -maxmatch -c 30 -p test SAMPLE.fa SAMPLE1.fa
+# ./show-coords -clr test.delta | awk '{print $10;'}  | tail -n 1
 fi
 ###############################################################################
 # SIMULATE ====================================================================
@@ -56,9 +57,10 @@ if [[ "$SIMULATE" -eq "1" ]]; then
 # MUTATE ======================================================================
 ./goose-fastq2fasta < SAMPLE.fq > SAMPLE.fa
 ./goose-fasta2seq   < SAMPLE.fa > SAMPLE
-rm -f DB.mfa SPACE;
 echo "\n\n" > SPACE;
-for((x=0 ; x< $MLIMIT ; ++x));
+./goose-seq2fasta -n "Substitution0" < SAMPLE > SAMPLE0.fa
+cat SAMPLE0.fa SPACE > DB.mfa;
+for((x=1 ; x< $MLIMIT ; ++x));
   do
   MRATE=`echo "scale=2;$x/100" | bc -l`;
   echo "Substitutions rate: $MRATE";
