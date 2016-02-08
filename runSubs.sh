@@ -57,6 +57,7 @@ make install
 cd ..
 cp MUMmer3.23/nucmer .
 cp MUMmer3.23/show-coords .
+cp MUMmer3.23/delta-filter .
 fi
 ###############################################################################
 # SIMULATE ====================================================================
@@ -98,6 +99,7 @@ for((x=0 ; x<$MLIMIT ; ++x));
   ./nucmer -maxmatch -c 30 -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
   ./show-coords -clr mummer-tmp.delta | \
   awk '{print "\t"$10;}' | tail -n 1 >> TOP-MUMMER;
+  # ./delta-filter CHOOSE BEST?
   done
 fi
 ###############################################################################
