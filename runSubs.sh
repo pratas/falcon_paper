@@ -5,14 +5,17 @@
 # (sudo apt-get install cmake git gnuplot)
 ###############################################################################
 # PARAMETERS ==================================================================
-MLIMIT=31;
-FQLINE=200;
-FQNREADS=10000;
 INSTALL=1;
 SIMULATE=1;
+SHUFFLE=1;
 FALCON=1;
 FILTER=1;
 PLOT=1;
+#==============================================================================
+MLIMIT=31;
+FQLINE=200;
+FQNREADS=10000;
+#==============================================================================
 DISTRIBUTION="0.3,0.2,0.2,0.3,0.001";
 EXTRAMUT=" -ir 0.01 -dr 0.01 ";
 FPARAM=" -m 20:500:1:3/50 -m 14:100:1:0/0 -m 12:1:0:0/0 -m 4:1:0:0/0 \
@@ -25,8 +28,9 @@ rm -fr goose-* FALCON XS COUNT goose/ falcon/ xs/ count/ SAMPLE* TOP* DB-mfa;
 git clone https://github.com/pratas/goose.git
 cd goose/src/
 make
-cp goose-* ../../
 cd ../../
+cp goose/src/goose-* .
+cp goose/scripts/ShufFASTQReads.sh .
 # GET FALCON ==================================================================
 git clone https://github.com/pratas/falcon.git
 cd falcon/src/
@@ -41,11 +45,14 @@ make
 cp XS ../
 cd ..
 # GET MUMmer 3.23 =============================================================
-# http://downloads.sourceforge.net/project/mummer/mummer/3.23/MUMmer3.23.tar.gz
-# tar -xvzf MUMmer3.23.tar.gz
-# cd XXX:
-# make check
-# make install
+rm -rf MUMmer.tar.gz MUMmer3.23/
+wget -O MUMmer.tar.gz \
+http://downloads.sourceforge.net/project/mummer/mummer/3.23/MUMmer3.23.tar.gz
+tar -xvzf MUMmer.tar.gz
+cd MUMmer3.23
+make check
+make install
+cd ..
 # ./nucmer -maxmatch -c 30 -p test SAMPLE.fa SAMPLE1.fa
 # ./show-coords -clr test.delta | awk '{print $10;'}  | tail -n 1
 fi
@@ -53,6 +60,7 @@ fi
 # SIMULATE ====================================================================
 if [[ "$SIMULATE" -eq "1" ]]; then
 ./XS -v -ls $FQLINE -n $FQNREADS -f $DISTRIBUTION -s 0 SAMPLE.fq
+# SHUF
 ###############################################################################
 # MUTATE ======================================================================
 ./goose-fastq2fasta < SAMPLE.fq > SAMPLE.fa
@@ -68,6 +76,12 @@ for((x=1 ; x< $MLIMIT ; ++x));
   ./goose-seq2fasta -n "Substitution$x" < SAMPLE$x > SAMPLE$x.fa 
   cat SAMPLE$x.fa SPACE >> DB.mfa;
   done
+fi
+###############################################################################
+# RUN FALCON ==================================================================
+if [[ "$SHUFFLE" -eq "1" ]]; then
+. ShufFASTQReads.sh SAMPLE.fq > SAMPLE-SHUF.fq
+mv SAMPLE-SHUF.fq SAMPLE.fq
 fi
 ###############################################################################
 # RUN FALCON ==================================================================
