@@ -14,11 +14,12 @@ FILTER=1;
 PLOT=1;
 #==============================================================================
 MLIMIT=31;
-FQLINE=200;
+FQLINE=100;
 FQNREADS=10000;
 #==============================================================================
 DISTRIBUTION="0.3,0.2,0.2,0.3,0.001";
-EXTRAMUT=" -ir 0.01 -dr 0.01 ";
+EXTRAMUT=" ";
+#EXTRAMUT=" -ir 0.01 -dr 0.01 ";
 FPARAM=" -m 20:500:1:3/50 -m 14:100:1:0/0 -m 12:1:0:0/0 -m 4:1:0:0/0 \
 -c 10 -g 0.95 ";
 ###############################################################################
@@ -67,7 +68,7 @@ if [[ "$SIMULATE" -eq "1" ]]; then
 echo "\n\n" > SPACE;
 ./goose-seq2fasta -n "Substitution0" < SAMPLE > SAMPLE0.fa
 cat SAMPLE0.fa SPACE > DB.mfa;
-for((x=1 ; x< $MLIMIT ; ++x));
+for((x=1 ; x<$MLIMIT ; ++x));
   do
   MRATE=`echo "scale=2;$x/100" | bc -l`;
   echo "Substitutions rate: $MRATE";
@@ -81,6 +82,7 @@ fi
 if [[ "$SHUFFLE" -eq "1" ]]; then
 . ShufFASTQReads.sh SAMPLE.fq > SAMPLE-SHUF.fq
 mv SAMPLE-SHUF.fq SAMPLE.fq
+./goose-fastq2fasta < SAMPLE.fq > SAMPLE.fa
 fi
 ###############################################################################
 # RUN FALCON ==================================================================
@@ -88,10 +90,16 @@ if [[ "$FALCON" -eq "1" ]]; then
 ./FALCON -v -F $FPARAM -n 4 -t $MLIMIT -x TOP-SUBS SAMPLE.fq DB.mfa
 fi
 ###############################################################################
-# RUN MUMMER
+# RUN MUMMER ==================================================================
 if [[ "$MUMMER" -eq "1" ]]; then
-# ./nucmer -maxmatch -c 30 -p test SAMPLE.fa SAMPLE1.fa
-# ./show-coords -clr test.delta | awk '{print $10;'}  | tail -n 1
+rm -f TOP-MUMMER;
+for((x=0 ; x<$MLIMIT ; ++x));
+  do
+  printf "%u" "$x" >> TOP-MUMMER;
+  ./nucmer -maxmatch -c 30 -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
+  ./show-coords -clr mummer-tmp.delta | \
+  awk '{print "\t"$10;}' | tail -n 1 >> TOP-MUMMER;
+  done
 fi
 ###############################################################################
 # FILTER ======================================================================
@@ -106,13 +114,14 @@ gnuplot << EOF
 set terminal pdfcairo enhanced color
 set output "mut.pdf"
 set auto
-set key right bottom
+set key right top
 set yrange [0:100] 
 set grid
-unset key
+#unset key
 set ylabel "Similarity"
 set xlabel "Mutation rate"
-plot "TOP-SUBS-FILT" u 1:2 w lines
+plot "TOP-SUBS-FILT" u 1:2 w lines title "FALCON", \
+ "TOP-MUMMER" u 1:2 w lines title "MUMMer"
 EOF
 fi
 #==============================================================================
