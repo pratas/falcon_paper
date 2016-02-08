@@ -62,8 +62,6 @@ fi
 # SIMULATE ====================================================================
 if [[ "$SIMULATE" -eq "1" ]]; then
 ./XS -v -ls $FQLINE -n $FQNREADS -f $DISTRIBUTION -s 0 SAMPLE.fq
-# SHUF
-###############################################################################
 # MUTATE ======================================================================
 ./goose-fastq2fasta < SAMPLE.fq > SAMPLE.fa
 ./goose-fasta2seq   < SAMPLE.fa > SAMPLE
