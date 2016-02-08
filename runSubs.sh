@@ -13,9 +13,9 @@ MUMMER=1;
 FILTER=1;
 PLOT=1;
 #==============================================================================
-MLIMIT=31;
+MLIMIT=41;
 FQLINE=100;
-FQNREADS=10000;
+FQNREADS=20000;
 #==============================================================================
 DISTRIBUTION="0.3,0.2,0.2,0.3,0.001";
 EXTRAMUT=" ";
@@ -55,6 +55,8 @@ cd MUMmer3.23
 make check
 make install
 cd ..
+cp MUMmer3.23/nucmer .
+cp MUMmer3.23/show-coords .
 fi
 ###############################################################################
 # SIMULATE ====================================================================
@@ -65,16 +67,15 @@ if [[ "$SIMULATE" -eq "1" ]]; then
 # MUTATE ======================================================================
 ./goose-fastq2fasta < SAMPLE.fq > SAMPLE.fa
 ./goose-fasta2seq   < SAMPLE.fa > SAMPLE
-echo "\n\n" > SPACE;
 ./goose-seq2fasta -n "Substitution0" < SAMPLE > SAMPLE0.fa
-cat SAMPLE0.fa SPACE > DB.mfa;
+cat SAMPLE0.fa > DB.mfa;
 for((x=1 ; x<$MLIMIT ; ++x));
   do
   MRATE=`echo "scale=2;$x/100" | bc -l`;
   echo "Substitutions rate: $MRATE";
   ./goose-mutatedna -mr $MRATE $EXTRAMUT < SAMPLE > SAMPLE$x;
   ./goose-seq2fasta -n "Substitution$x" < SAMPLE$x > SAMPLE$x.fa 
-  cat SAMPLE$x.fa SPACE >> DB.mfa;
+  cat SAMPLE$x.fa >> DB.mfa;
   done
 fi
 ###############################################################################
@@ -114,7 +115,7 @@ gnuplot << EOF
 set terminal pdfcairo enhanced color
 set output "mut.pdf"
 set auto
-set key right top
+set key right bottom
 set yrange [0:100] 
 set grid
 #unset key
