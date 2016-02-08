@@ -9,6 +9,7 @@ INSTALL=1;
 SIMULATE=1;
 SHUFFLE=1;
 FALCON=1;
+MUMMER=1;
 FILTER=1;
 PLOT=1;
 #==============================================================================
@@ -53,8 +54,6 @@ cd MUMmer3.23
 make check
 make install
 cd ..
-# ./nucmer -maxmatch -c 30 -p test SAMPLE.fa SAMPLE1.fa
-# ./show-coords -clr test.delta | awk '{print $10;'}  | tail -n 1
 fi
 ###############################################################################
 # SIMULATE ====================================================================
@@ -87,6 +86,12 @@ fi
 # RUN FALCON ==================================================================
 if [[ "$FALCON" -eq "1" ]]; then
 ./FALCON -v -F $FPARAM -n 4 -t $MLIMIT -x TOP-SUBS SAMPLE.fq DB.mfa
+fi
+###############################################################################
+# RUN MUMMER
+if [[ "$MUMMER" -eq "1" ]]; then
+# ./nucmer -maxmatch -c 30 -p test SAMPLE.fa SAMPLE1.fa
+# ./show-coords -clr test.delta | awk '{print $10;'}  | tail -n 1
 fi
 ###############################################################################
 # FILTER ======================================================================
