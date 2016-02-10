@@ -97,8 +97,8 @@ rm -f TOP-MUMMER;
 for((x=0 ; x<$MLIMIT ; ++x));
   do
   printf "%u\t" "$x" >> TOP-MUMMER;
-  #./nucmer -c 20 -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
-  ./nucmer -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
+  ./nucmer -c 20 -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
+  #./nucmer -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
   ./delta-filter -1 mummer-tmp.delta > mummer-tmp.delta2 # 1-1 BEST OPTION
   ./show-coords -clr mummer-tmp.delta2 > mummer-tmp.delta3
   echo "Running Global similarity for MUMmer ...";
@@ -118,7 +118,7 @@ gnuplot << EOF
 set terminal pdfcairo enhanced color
 set output "mut.pdf"
 set auto
-set key right bottom
+set key right top
 set yrange [0:100] 
 set grid
 #unset key
