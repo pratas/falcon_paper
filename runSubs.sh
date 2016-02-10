@@ -96,8 +96,9 @@ if [[ "$MUMMER" -eq "1" ]]; then
 rm -f TOP-MUMMER;
 for((x=0 ; x<$MLIMIT ; ++x));
   do
-  printf "%u" "$x" >> TOP-MUMMER;
-  ./nucmer -c 20 -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
+  printf "%u\t" "$x" >> TOP-MUMMER;
+  #./nucmer -c 20 -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
+  ./nucmer -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
   ./delta-filter -1 mummer-tmp.delta > mummer-tmp.delta2 # 1-1 BEST OPTION
   ./show-coords -clr mummer-tmp.delta2 > mummer-tmp.delta3
   echo "Running Global similarity for MUMmer ...";
