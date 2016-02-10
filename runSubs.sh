@@ -17,7 +17,7 @@ MLIMIT=41;
 FQLINE=100;
 FQNREADS=20000;
 #==============================================================================
-DISTRIBUTION="0.3,0.2,0.2,0.3,0.001";
+DISTRIBUTION="0.3,0.2,0.2,0.3,0.000";
 EXTRAMUT=" ";
 #EXTRAMUT=" -ir 0.01 -dr 0.01 ";
 FPARAM=" -m 20:500:1:3/50 -m 14:100:1:0/0 -m 12:1:0:0/0 -m 4:1:0:0/0 \
@@ -33,6 +33,7 @@ make
 cd ../../
 cp goose/src/goose-* .
 cp goose/scripts/ShufFASTQReads.sh .
+cp goose/scripts/GlobalMUMmer.sh .
 # GET FALCON ==================================================================
 git clone https://github.com/pratas/falcon.git
 cd falcon/src/
@@ -96,10 +97,11 @@ rm -f TOP-MUMMER;
 for((x=0 ; x<$MLIMIT ; ++x));
   do
   printf "%u" "$x" >> TOP-MUMMER;
-  ./nucmer -maxmatch -c 30 -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
-  ./show-coords -clr mummer-tmp.delta | \
-  awk '{print "\t"$10;}' | tail -n 1 >> TOP-MUMMER;
-  # ./delta-filter CHOOSE BEST?
+  ./nucmer -c 20 -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
+  ./delta-filter -1 mummer-tmp.delta > mummer-tmp.delta2 # 1-1 BEST OPTION
+  ./show-coords -clr mummer-tmp.delta2 > mummer-tmp.delta3
+  echo "Running Global similarity for MUMmer ...";
+  . GlobalMUMmer.sh mummer-tmp.delta3 >> TOP-MUMMER;
   done
 fi
 ###############################################################################
