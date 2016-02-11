@@ -10,6 +10,7 @@ SIMULATE=1;
 SHUFFLE=1;
 FALCON=1;
 MUMMER=1;
+MUMMER20=1;
 FILTER=1;
 PLOT=1;
 #==============================================================================
@@ -25,7 +26,7 @@ FPARAM=" -m 20:500:1:3/50 -m 14:100:1:0/0 -m 12:1:0:0/0 -m 4:1:0:0/0 \
 ###############################################################################
 if [[ "$INSTALL" -eq "1" ]]; then
 # CLEAN & INSTALL =============================================================
-rm -fr goose-* FALCON XS COUNT goose/ falcon/ xs/ count/ SAMPLE* TOP* DB-mfa;
+rm -fr goose-* FALCON XS goose/ falcon/ xs/ SAMPLE* DB-mfa;
 # GET GOOSE FRAMEWORK =========================================================
 git clone https://github.com/pratas/goose.git
 cd goose/src/
@@ -97,12 +98,25 @@ rm -f TOP-MUMMER;
 for((x=0 ; x<$MLIMIT ; ++x));
   do
   printf "%u\t" "$x" >> TOP-MUMMER;
-  ./nucmer -c 20 -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
-  #./nucmer -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
-  ./delta-filter -1 mummer-tmp.delta > mummer-tmp.delta2 # 1-1 BEST OPTION
+  ./nucmer -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
+  ./delta-filter -1 mummer-tmp.delta > mummer-tmp.delta2
   ./show-coords -clr mummer-tmp.delta2 > mummer-tmp.delta3
   echo "Running Global similarity for MUMmer ...";
   . GlobalMUMmer.sh mummer-tmp.delta3 >> TOP-MUMMER;
+  done
+fi
+###############################################################################
+# RUN MUMMER 20 ===============================================================
+if [[ "$MUMMER20" -eq "1" ]]; then
+rm -f TOP-MUMMER20;
+for((x=0 ; x<$MLIMIT ; ++x));
+  do
+  printf "%u\t" "$x" >> TOP-MUMMER20;
+  ./nucmer -c 20 -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
+  ./delta-filter -1 mummer-tmp.delta > mummer-tmp.delta2
+  ./show-coords -clr mummer-tmp.delta2 > mummer-tmp.delta3
+  echo "Running Global similarity for MUMmer -c 20 ...";
+  . GlobalMUMmer.sh mummer-tmp.delta3 >> TOP-MUMMER20;
   done
 fi
 ###############################################################################
@@ -125,7 +139,8 @@ set grid
 set ylabel "Similarity"
 set xlabel "Mutation rate"
 plot "TOP-SUBS-FILT" u 1:2 w lines title "FALCON", \
- "TOP-MUMMER" u 1:2 w lines title "MUMMer"
+ "TOP-MUMMER" u 1:2 w lines title "MUMmer", \
+ "TOP-MUMMER20" u 1:2 w lines title "MUMmer -c 20"
 EOF
 fi
 #==============================================================================
