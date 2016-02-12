@@ -159,7 +159,7 @@ set ylabel "Similarity"
 set xlabel "Mutation rate"
 plot "TOP-SUBS-FILT" u 1:2 w lines title "FALCON", \
  "TOP-MUMMER" u 1:2 w lines title "MUMmer", \
- "TOP-MUMMER20" u 1:2 w lines title "MUMmer -c 20" \
+ "TOP-MUMMER20" u 1:2 w lines title "MUMmer -c 20", \
  "TOP-MUMMER20MM" u 1:2 w lines title "MUMmer --maxmatch -c 20"
 EOF
 fi
