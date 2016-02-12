@@ -11,6 +11,7 @@ SHUFFLE=1;
 FALCON=1;
 MUMMER=1;
 MUMMER20=1;
+MUMMER20MM=1;
 FILTER=1;
 PLOT=1;
 #==============================================================================
@@ -124,6 +125,20 @@ for((x=0 ; x<$MLIMIT ; ++x));
   done
 fi
 ###############################################################################
+# RUN MUMMER 20 ===============================================================
+if [[ "$MUMMER20MM" -eq "1" ]]; then
+rm -f TOP-MUMMER20MM;
+for((x=0 ; x<$MLIMIT ; ++x));
+  do
+  printf "%u\t" "$x" >> TOP-MUMMER20MM;
+  ./nucmer --maxmatch -c 20 -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
+  ./delta-filter -1 mummer-tmp.delta > mummer-tmp.delta2
+  ./show-coords -clr mummer-tmp.delta2 > mummer-tmp.delta3
+  echo "Running Global similarity for MUMmer -c 20 ...";
+  . GlobalMUMmer.sh mummer-tmp.delta3 >> TOP-MUMMER20MM;
+  done
+fi
+###############################################################################
 # FILTER ======================================================================
 if [[ "$FILTER" -eq "1" ]]; then
 cat TOP-SUBS | awk '{ print $4"\t"$3;}' | sed 's/\Substitution//g' | sort -n \
@@ -144,7 +159,8 @@ set ylabel "Similarity"
 set xlabel "Mutation rate"
 plot "TOP-SUBS-FILT" u 1:2 w lines title "FALCON", \
  "TOP-MUMMER" u 1:2 w lines title "MUMmer", \
- "TOP-MUMMER20" u 1:2 w lines title "MUMmer -c 20"
+ "TOP-MUMMER20" u 1:2 w lines title "MUMmer -c 20" \
+ "TOP-MUMMER20MM" u 1:2 w lines title "MUMmer --maxmatch -c 20"
 EOF
 fi
 #==============================================================================
