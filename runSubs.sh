@@ -15,14 +15,15 @@ FILTER=1;
 PLOT=1;
 #==============================================================================
 MLIMIT=41;
-FQLINE=100;
+FQLINE=200;
 FQNREADS=20000;
 #==============================================================================
 DISTRIBUTION="0.3,0.2,0.2,0.3,0.000";
 EXTRAMUT=" ";
 #EXTRAMUT=" -ir 0.01 -dr 0.01 ";
-FPARAM=" -m 20:500:1:3/50 -m 14:100:1:0/0 -m 12:1:0:0/0 -m 4:1:0:0/0 \
--c 10 -g 0.95 ";
+#FPARAM=" -m 14:500:1:5/50 -c 15 -g 0.9 ";
+FPARAM=" -m 20:500:1:5/50 -m 14:100:1:0/0 -m 12:1:0:0/0 -m 4:1:0:0/0 \
+#-c 15 -g 0.95 ";
 ###############################################################################
 if [[ "$INSTALL" -eq "1" ]]; then
 # CLEAN & INSTALL =============================================================
@@ -72,7 +73,7 @@ if [[ "$SIMULATE" -eq "1" ]]; then
 cat SAMPLE0.fa > DB.mfa;
 for((x=1 ; x<$MLIMIT ; ++x));
   do
-  MRATE=`echo "scale=2;$x/100" | bc -l`;
+  MRATE=`echo "scale=3;$x/100" | bc -l`;
   echo "Substitutions rate: $MRATE";
   ./goose-mutatedna -mr $MRATE $EXTRAMUT < SAMPLE > SAMPLE$x;
   ./goose-seq2fasta -n "Substitution$x" < SAMPLE$x > SAMPLE$x.fa 
@@ -80,7 +81,7 @@ for((x=1 ; x<$MLIMIT ; ++x));
   done
 fi
 ###############################################################################
-# RUN FALCON ==================================================================
+# SHUFFLE READS ===============================================================
 if [[ "$SHUFFLE" -eq "1" ]]; then
 . ShufFASTQReads.sh SAMPLE.fq > SAMPLE-SHUF.fq
 mv SAMPLE-SHUF.fq SAMPLE.fq
@@ -90,6 +91,7 @@ fi
 # RUN FALCON ==================================================================
 if [[ "$FALCON" -eq "1" ]]; then
 ./FALCON -v -F $FPARAM -n 4 -t $MLIMIT -x TOP-SUBS SAMPLE.fq DB.mfa
+#./FALCON -v -F $FPARAM -n 4 -t $MLIMIT -x TOP-SUBS SAMPLE0.fa DB.mfa
 fi
 ###############################################################################
 # RUN MUMMER ==================================================================
@@ -99,6 +101,7 @@ for((x=0 ; x<$MLIMIT ; ++x));
   do
   printf "%u\t" "$x" >> TOP-MUMMER;
   ./nucmer -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
+  #./nucmer -p mummer-tmp SAMPLE0.fa SAMPLE$x.fa
   ./delta-filter -1 mummer-tmp.delta > mummer-tmp.delta2
   ./show-coords -clr mummer-tmp.delta2 > mummer-tmp.delta3
   echo "Running Global similarity for MUMmer ...";
@@ -113,6 +116,7 @@ for((x=0 ; x<$MLIMIT ; ++x));
   do
   printf "%u\t" "$x" >> TOP-MUMMER20;
   ./nucmer -c 20 -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
+#  ./nucmer -c 20 -p mummer-tmp SAMPLE0.fa SAMPLE$x.fa
   ./delta-filter -1 mummer-tmp.delta > mummer-tmp.delta2
   ./show-coords -clr mummer-tmp.delta2 > mummer-tmp.delta3
   echo "Running Global similarity for MUMmer -c 20 ...";
