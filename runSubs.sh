@@ -9,9 +9,9 @@ INSTALL=1;
 SIMULATE=1;
 SHUFFLE=1;
 FALCON=1;
-MUMMER=1;
-MUMMER20=1;
-MUMMER20MM=1;
+MUMMER=0;
+MUMMER20=0;
+MUMMER20MM=0;
 FILTER=1;
 PLOT=1;
 #==============================================================================
