@@ -7,28 +7,38 @@
 # PARAMETERS ==================================================================
 INSTALL=1;
 SIMULATE=1;
-SHUFFLE=1;
+SHUFFLE=0;
 FALCON=1;
-MUMMER=0;
-MUMMER20=0;
-MUMMER20MM=0;
-FILTER=1;
+GECO=1;
+GREEN=1;
+MUMMER=1;
+MUMMER20=1;
 PLOT=1;
 #==============================================================================
-MLIMIT=41;
-FQLINE=200;
-FQNREADS=20000;
+MLIMIT=50;
+FQLINE=2000;
+FQNREADS=2000;
 #==============================================================================
 DISTRIBUTION="0.3,0.2,0.2,0.3,0.000";
 EXTRAMUT=" ";
 #EXTRAMUT=" -ir 0.01 -dr 0.01 ";
-#FPARAM=" -m 14:500:1:5/50 -c 15 -g 0.9 ";
-FPARAM=" -m 20:500:1:5/50 -m 14:100:1:0/0 -m 12:1:0:0/0 -m 4:1:0:0/0 \
+#FPARAM=" -m 20:500:1:10/20 -m 14:100:1:0/0 -m 12:1:0:0/0 -m 4:1:0:0/0 \
+#-c 20 -g 0.95 ";
+#GPARAM=" -rm 20:500:1:10/20 -rm 14:100:1:0/0 -rm 12:1:0:0/0 -rm 4:1:0:0/0 \
 #-c 15 -g 0.95 ";
+FPARAM=" -m 20:1000:0:5/50 -c 30 -g 0.95 ";
+GPARAM=" -rm 20:1000:1:5/50 -c 30 -g 0.95 ";
+GREENPARAM=" -i -f 10 -k 15 ";
+###############################################################################
+if [[ "$INSTALL" -eq "1" ]]; then
+  rm -fr stmp;
+  mkdir stmp;
+fi
+cd stmp/
 ###############################################################################
 if [[ "$INSTALL" -eq "1" ]]; then
 # CLEAN & INSTALL =============================================================
-rm -fr goose-* FALCON XS goose/ falcon/ xs/ SAMPLE* DB-mfa;
+rm -fr goose-* FALCON XS goose/ falcon/ xs/ geco/ SAMPLE* DB-mfa;
 # GET GOOSE FRAMEWORK =========================================================
 git clone https://github.com/pratas/goose.git
 cd goose/src/
@@ -49,6 +59,20 @@ git clone https://github.com/pratas/xs.git
 cd xs
 make
 cp XS ../
+cd ..
+# GET GECO ====================================================================
+git clone https://github.com/pratas/geco.git
+cd geco/src/
+cmake .
+make
+cp GeCo ../../
+cd ../../
+# GET GREEN ===================================================================
+wget http://bioinformatics.ua.pt/wp-content/uploads/2014/09/GReEn1.tar.gz
+tar -xvzf GReEn1.tar.gz
+cd GReEn1/
+make
+cp GReEnC ../
 cd ..
 # GET MUMmer 3.23 =============================================================
 rm -rf MUMmer.tar.gz MUMmer3.23/
@@ -76,7 +100,7 @@ for((x=1 ; x<$MLIMIT ; ++x));
   do
   MRATE=`echo "scale=3;$x/100" | bc -l`;
   echo "Substitutions rate: $MRATE";
-  ./goose-mutatedna -mr $MRATE $EXTRAMUT < SAMPLE > SAMPLE$x;
+  ./goose-mutatedna -s $x -mr $MRATE $EXTRAMUT < SAMPLE > SAMPLE$x;
   ./goose-seq2fasta -n "Substitution$x" < SAMPLE$x > SAMPLE$x.fa 
   cat SAMPLE$x.fa >> DB.mfa;
   done
@@ -93,7 +117,47 @@ fi
 if [[ "$FALCON" -eq "1" ]]; then
 ./FALCON -v -F $FPARAM -n 4 -t $MLIMIT -x TOP-SUBS SAMPLE.fq DB.mfa
 #./FALCON -v -F $FPARAM -n 4 -t $MLIMIT -x TOP-SUBS SAMPLE0.fa DB.mfa
+cat TOP-SUBS | awk '{ print $4"\t"$3;}' | sed 's/\Substitution//g' | sort -n \
+| awk '{ print $1"\t"$2;}' > TOP-SUBS-FILT;
 fi
+###############################################################################
+# RUN GECO ====================================================================
+if [[ "$GECO" -eq "1" ]]; then
+rm -f TOP-GECO;
+cat SAMPLE.fa | grep -v ">" | tr -d -c "ACGTN" > SAMPLE.seq;
+./goose-reverse SAMPLE.seq > SAMPLE_REV;
+GSIZE=`./goose-info SAMPLE_REV  | grep "Number of" | awk '{ print $4;}'`;
+for((x=0 ; x<$MLIMIT ; ++x));
+  do
+  printf "%u\t" "$x" >> TOP-GECO;
+  ./GeCo -v -e $GPARAM -r SAMPLE.fa SAMPLE$x.fa;
+  cat SAMPLE$x.fa | grep -v ">" | tr -d -c "ACGTN" > XSAM.seq;
+  ./goose-reverse XSAM.seq > XSAM_REV;
+  ./GeCo -v -e $GPARAM -r SAMPLE_REV XSAM_REV;
+  tac XSAM_REV.iae > profileL.iae;
+  ./goose-min SAMPLE$x.fa.iae profileL.iae > profileMin.iae
+  GVALUE=`./goose-sum profileMin.iae`;
+  GRES=`echo "scale=6;100-(($GVALUE/(2*$GSIZE))*100)" | bc -l`;
+  echo $GRES >> TOP-GECO;
+  done
+fi
+###############################################################################
+# RUN GREEN ===================================================================
+if [[ "$GREEN" -eq "1" ]]; then
+rm -f TOP-GREEN;
+cat SAMPLE.fa | grep -v ">" | tr -d -c "ACGTN" > SAMPLE.seq;
+GSIZE=`./goose-info SAMPLE.seq  | grep "Number of" | awk '{ print $4;}'`;
+for((x=0 ; x<$MLIMIT ; ++x));
+  do
+  printf "%u\t" "$x" >> TOP-GREEN;
+  cat SAMPLE$x.fa | grep -v ">" | tr -d -c "ACGTN" > SAMPLEX.seq;
+  ./GReEnC -v $GREENPARAM SAMPLE.seq SAMPLEX.seq > TMPX;
+  GVALUE=`cat TMPX | grep "number of bytes" | awk '{ print $5;}'`;
+  GRES=`echo "scale=6;100-((8*($GVALUE)/(2*$GSIZE))*100)" | bc -l`;
+  echo $GRES >> TOP-GREEN;
+  done
+fi
+
 ###############################################################################
 # RUN MUMMER ==================================================================
 if [[ "$MUMMER" -eq "1" ]]; then
@@ -102,7 +166,6 @@ for((x=0 ; x<$MLIMIT ; ++x));
   do
   printf "%u\t" "$x" >> TOP-MUMMER;
   ./nucmer -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
-  #./nucmer -p mummer-tmp SAMPLE0.fa SAMPLE$x.fa
   ./delta-filter -1 mummer-tmp.delta > mummer-tmp.delta2
   ./show-coords -clr mummer-tmp.delta2 > mummer-tmp.delta3
   echo "Running Global similarity for MUMmer ...";
@@ -116,33 +179,13 @@ rm -f TOP-MUMMER20;
 for((x=0 ; x<$MLIMIT ; ++x));
   do
   printf "%u\t" "$x" >> TOP-MUMMER20;
+  #./nucmer --maxmatch -c 20 -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
   ./nucmer -c 20 -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
-#  ./nucmer -c 20 -p mummer-tmp SAMPLE0.fa SAMPLE$x.fa
   ./delta-filter -1 mummer-tmp.delta > mummer-tmp.delta2
   ./show-coords -clr mummer-tmp.delta2 > mummer-tmp.delta3
   echo "Running Global similarity for MUMmer -c 20 ...";
   . GlobalMUMmer.sh mummer-tmp.delta3 >> TOP-MUMMER20;
   done
-fi
-###############################################################################
-# RUN MUMMER 20 ===============================================================
-if [[ "$MUMMER20MM" -eq "1" ]]; then
-rm -f TOP-MUMMER20MM;
-for((x=0 ; x<$MLIMIT ; ++x));
-  do
-  printf "%u\t" "$x" >> TOP-MUMMER20MM;
-  ./nucmer --maxmatch -c 20 -p mummer-tmp SAMPLE.fa SAMPLE$x.fa
-  ./delta-filter -1 mummer-tmp.delta > mummer-tmp.delta2
-  ./show-coords -clr mummer-tmp.delta2 > mummer-tmp.delta3
-  echo "Running Global similarity for MUMmer -c 20 ...";
-  . GlobalMUMmer.sh mummer-tmp.delta3 >> TOP-MUMMER20MM;
-  done
-fi
-###############################################################################
-# FILTER ======================================================================
-if [[ "$FILTER" -eq "1" ]]; then
-cat TOP-SUBS | awk '{ print $4"\t"$3;}' | sed 's/\Substitution//g' | sort -n \
-| awk '{ print $1"\t"$2;}' > TOP-SUBS-FILT;
 fi
 ###############################################################################
 # PLOT ========================================================================
@@ -151,17 +194,20 @@ gnuplot << EOF
 set terminal pdfcairo enhanced color
 set output "mut.pdf"
 set auto
-set key right top
+set key right top box
 set yrange [0:100] 
+h(x)=(-x*log(x)-(1-x)*log(1-x))/log(2)
 set grid
-#unset key
-set ylabel "Similarity"
-set xlabel "Mutation rate"
-plot "TOP-SUBS-FILT" u 1:2 w lines title "FALCON", \
+set ylabel "Relative similarity (%)"
+set xlabel "Substitution rate (%)"
+plot [0:100] "TOP-SUBS-FILT" u 1:2 w lines title "FALCON", \
+ "TOP-GECO" u 1:2 w lines title "GECO-Bidir", \
+ "TOP-GREEN" u 1:2 w lines title "GREEN", \
  "TOP-MUMMER" u 1:2 w lines title "MUMmer", \
  "TOP-MUMMER20" u 1:2 w lines title "MUMmer -c 20", \
- "TOP-MUMMER20MM" u 1:2 w lines title "MUMmer --maxmatch -c 20"
+ ((1-(h(x/100)/2+x/100*log(3)/(2*log(2))))*100) w lines title "Theoretical"
 EOF
 fi
 #==============================================================================
-
+cp mut.pdf ../
+cd ..
