@@ -206,8 +206,8 @@ plot [$PMAX:$PMIN] "TOP-SUBS-FILT" u 1:2 w lines title "FALCON", \
  "TOP-GREEN" u 1:2 w lines title "GREEN", \
  "TOP-MUMMER" u 1:2 w lines title "MUMmer", \
  "TOP-MUMMER20" u 1:2 w lines title "MUMmer -c 20", \
- (1-(1./x)*log(1.0*$FQLINE*$FQNREADS)/log(2.)/2)*100 w lines title "theoretical 2", \
- (1-(1./x)*(2*log(1.0*$FQLINE*$FQNREADS)/log(2.)/2-1))*100  w lines title "theoretical"
+ (1-(1./x)*log(1.0*$FQLINE*$FQNREADS)/log(2.)/2.)*100 w lines title "Theoretical Fix", \
+ (1-((1./x)*(2*log(1.0*$FQLINE*$FQNREADS)/log(2.)-1)/2.))*100  w lines title "Theoretical var"
 EOF
 fi
 #==============================================================================
