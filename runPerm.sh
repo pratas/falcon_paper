@@ -211,6 +211,5 @@ plot [$PMAX:$PMIN] "TOP-SUBS-FILT" u 1:2 w lines title "FALCON", \
 EOF
 fi
 #==============================================================================
-cp per.pdf ../../imgs/
 cp per.pdf ..
 cd ..
