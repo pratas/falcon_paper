@@ -1,6 +1,6 @@
 <p align="center"><img src="https://github.com/pratas/falcon/blob/master/imgs/logo.png" alt="FALCON" width="250" height="250" border="0" /></p>
 
-<p align="justify">
+<p align="justify" width="80%">
 Auxiliar <b>tools to compute the results of the paper describing FALCON</b>. It requires a <b>Linux</b> OS with <b>cmake</b>, <b>git</b> and <b>gnuplot</b>. The experience requires approximately 6 GB of RAM and 2 GB of disk. It has been optimized to a laptop computer with 4 cores, although it can run in 1 core.
 </p>
 
